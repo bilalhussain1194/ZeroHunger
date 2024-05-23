@@ -11,7 +11,7 @@ namespace Kill_hunger.Data
 
         public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options, IConfiguration configuration) : base(options)
         {
-            connectionString = configuration.GetSection("ConnectionStrings:DefaultConnection").Value;
+            connectionString = configuration.GetSection("ConnectionStrings:DefaultConnection").Value!;
         }
          protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -19,8 +19,9 @@ namespace Kill_hunger.Data
             options.UseSqlServer(connectionString);
         }
 
-        public DbSet<FileDetails> FileDetails { get; set; }
-        public DbSet<User> users { get; set; }
-       
+        public DbSet<FileDetails> FileDetails { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Request> Requests { get; set; } = null!;
+        public DbSet<RequestClaim> RequestClaims { get; set; } = null!;
     }
 }
