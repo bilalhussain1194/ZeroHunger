@@ -1,17 +1,23 @@
 ﻿using Kill_hunger.Data;
 using Kill_hunger.Models;
+using MaxMind.GeoIP2;
+using MaxMind.GeoIP2.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics.Eventing.Reader;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 
 namespace Kill_hunger.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+  
     public class Accounts : ControllerBase
     {
 
@@ -25,21 +31,52 @@ namespace Kill_hunger.Controllers
         }
         [AllowAnonymous]
         [HttpPost]
-        public IActionResult Login([FromBody] UserModel login)
+        [Route("Login")]
+        public APIResponse Login([FromBody] UserModel login)
         {
-            IActionResult response = Unauthorized();
-            var user = AuthenticateUser(login);
-
-            if (user != null)
+            var ipAddress = HttpContext.GetServerVariable("HTTP_X_FORWARDED_FOR") ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+            var ipAddressWithoutPort = ipAddress?.Split(':')[0];
+            APIResponse aPIResponse = new APIResponse();
+             ipAddressWithoutPort = ipAddressWithoutPort==""?"::1":ipAddressWithoutPort;
+            List<string> GeaLocationData = GetIpLocation(ipAddressWithoutPort);
+            try
             {
-                var tokenString = GenerateJSONWebToken(user);
-                response = Ok(new { token = tokenString });
-            }
+                IActionResult response = Unauthorized();
+                var user = AuthenticateUser(login);
 
-            return response;
+                if (user != null)
+                {
+                    var tokenString = GenerateJSONWebToken();
+                    login.usertoken = tokenString;
+                    login.city = GeaLocationData?[0]??"";
+                    login.country = GeaLocationData?[1]??"";
+
+                }
+                else
+                {
+                  
+                    aPIResponse.Status = "Error";
+                    aPIResponse.Message = "Login Failed";
+                    return aPIResponse;
+                }
+
+
+                aPIResponse.Data = login;
+                aPIResponse.Status = "Success";
+                aPIResponse.Message = "Login Successful";
+
+            }
+            catch (Exception e)
+            {
+           
+                aPIResponse.Status = "Error";
+                aPIResponse.Message = "Login Failed";
+            }
+            return aPIResponse;
         }
 
-        private string GenerateJSONWebToken(UserModel userInfo)
+        [NonAction]
+        private string GenerateJSONWebToken()
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -53,59 +90,131 @@ namespace Kill_hunger.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private UserModel AuthenticateUser(UserModel login)
+        [NonAction]
+        private User AuthenticateUser(UserModel login)
         {
-            UserModel user = null;
+            User user = null;
 
-            //Validate the User Credentials
-            //Demo Purpose, I have Passed HardCoded User Information
-            if (login.UserName == "Jignesh")
-            {
-                user = new UserModel { UserName = "Jignesh Trivedi", Password = "test.btest@gmail.com" };
-            }
+            user = _dbcontext.users.Where(x=>x.Password == login.Password && x.Email == login.Email).FirstOrDefault();
             return user;
         }
+    
 
-
-        public IActionResult Register([FromBody] UserRegisterModel user)
+        [NonAction]
+        public static List<String> GetIpLocation(String ip)
         {
+            List<String> GealocationData = new List<string>();
+            IPAddress address = IPAddress.Parse(ip);
 
+            if (IPAddress.IsLoopback(address))
+            {
+                return null;
+            }
 
+            using (var reader = new DatabaseReader(Directory.GetCurrentDirectory() + "/GeoLite2-City.mmdb"))
+            {
+                var response = reader.City(ip);
+                var responsecountry = reader.Country(ip);
 
+                GealocationData.Add(response.City.Name??"");
+          
+                GealocationData.Add(responsecountry.Country.Name??"");
+            }
+
+            return GealocationData;
+        }
+
+        [HttpPost]
+        [Route("Register")]
+        public async Task<APIResponse> Register([FromForm] UserRegisterModel user)
+        {
+            APIResponse aPIResponse = new APIResponse();
             if(user != null)
             {
                 try
                 {
-                    foreach (var file in user.FileDetails)
+                    var fileresponse = new Dictionary<string, string>();
+                    List<FileDetails> dbfilelist = new List<FileDetails>();
+                 
+                    if(user.FileDetails != null||user.FileDetails.Count>0)
                     {
-                    
-                        var folderName = Path.Combine("Resources", "Files");
-                        var filePath = Path.Combine(Directory.GetCurrentDirectory(), folderName);
-
-                        if (!Directory.Exists(filePath))
+                        foreach (var file in user.FileDetails)
                         {
-                            Directory.CreateDirectory(filePath);
+
+                            var folderName = Path.Combine("Resources", "Files");
+                            var filePath = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+
+                            if (!Directory.Exists(filePath))
+                            {
+                                Directory.CreateDirectory(filePath);
+                            }
+                            var fileName = file.FileName;
+                            var fullPath = Path.Combine(filePath, fileName);
+                            var dbPath = Path.Combine(folderName, fileName);
+
+                            if (!System.IO.File.Exists(fullPath))
+                            {
+                                using var memoryStream = new MemoryStream();
+                                await file.CopyToAsync(memoryStream);
+                                await System.IO.File.WriteAllBytesAsync(fullPath, memoryStream.ToArray());
+                                
+                                
+                                dbfilelist.Add(new FileDetails { FileName = fileName, FileType = user.Filetype,FilePath=dbPath });
+
+
+                                fileresponse.Add(fileName, "File uploaded successfully.");
+
+                            }
+                            else
+                            {
+                                fileresponse.Add(fileName, "File already exists");
+                            }
+
                         }
-                        var fileName=file.FileName;
-                        var fullPath=Path.Combine(filePath, fileName);
-                        var dbPath=Path.Combine(folderName, fileName);
-                        using (var stream = new FileStream(fullPath, FileMode.Create))
-                        {
-                            file.CopyTo(stream);
-                        };
-                  
-
-
+                       
                     }
+                    else
+                    {
+
+                        aPIResponse.Status = "Error";
+                        aPIResponse.Message = "Please Upload Files";
+                        return aPIResponse;
+                    }
+
+                  User dbuser= new User
+                    {
+                        Email = user.Email,
+                        Password = user.Password,
+                        IsIndivitual=user.IsIndivitual,
+                        Name=user.Name,
+                        City=user.City,
+                        Country=user.Country,
+                        FileDetails= dbfilelist,
+                        IsProvider=user.IsProvider,
+                        Street=user.Street,
+                        PostalCode  =user.PostalCode
+
+
+
+                    };
+
+
+                    _dbcontext.users.Add(dbuser);
+                    _dbcontext.SaveChanges();
+
+                    aPIResponse.Status = "Success";
+                    aPIResponse.Message = "Registration Successful";
+
 
                 }
                 catch (Exception)
                 {
-                    throw;
+                    aPIResponse.Status = "Error";
+                    aPIResponse.Message = "Registration Failed";
                 }
 
             }
-            return BadRequest();
+            return aPIResponse;
         }
     }
 

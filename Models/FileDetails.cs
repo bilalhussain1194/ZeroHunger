@@ -10,7 +10,7 @@ namespace Kill_hunger.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
         public string FileName { get; set; }
-        public byte[] FileData { get; set; }
+        public string FilePath { get; set; }
         public String FileType { get; set; }
         public User User { get; set; }
         public int UserId { get; set; }
