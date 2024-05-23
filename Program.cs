@@ -13,6 +13,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors();
 builder.Services.Configure<ForwardedHeadersOptions>(options => {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.KnownNetworks.Clear();
@@ -54,7 +55,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseCors(options=>options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().WithOrigins("https://ec69-203-101-164-179.ngrok-free.app/"));
 app.MapControllers();
 
 app.Run();

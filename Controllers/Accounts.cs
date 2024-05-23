@@ -95,7 +95,7 @@ namespace Kill_hunger.Controllers
         {
             User user = null;
 
-            user = _dbcontext.users.Where(x=>x.Password == login.Password && x.Email == login.Email).FirstOrDefault();
+            user = _dbcontext.Users.Where(x=>x.Password == login.Password && x.Email == login.Email).FirstOrDefault();
             return user;
         }
     
@@ -199,7 +199,7 @@ namespace Kill_hunger.Controllers
                     };
 
 
-                    _dbcontext.users.Add(dbuser);
+                    _dbcontext.Users.Add(dbuser);
                     _dbcontext.SaveChanges();
 
                     aPIResponse.Status = "Success";
