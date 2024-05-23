@@ -1,0 +1,6 @@
+@Kill_hunger_HostAddress = http://localhost:5108
+
+GET {{Kill_hunger_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
