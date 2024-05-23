@@ -28,11 +28,16 @@ namespace Kill_hunger.Controllers
         /// <response code="500">Unexpected Error encountered</response>
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpGet]
-        public async Task<ActionResult<Request>> Get()
+        public async Task<APIResponse> Get()
         {
+            APIResponse aPIResponse = new();
+
             var request = await _context.Requests.ToListAsync();
 
-            return Ok(request);
+            aPIResponse.Data = request;
+            aPIResponse.Status = "Success";
+            
+            return aPIResponse;
         }
 
         /// <summary>
@@ -45,15 +50,20 @@ namespace Kill_hunger.Controllers
         /// <response code="500">Unexpected Error encountered</response>
         [ProducesResponseType(StatusCodes.Status201Created)]
         [HttpPost]
-        public async Task<ActionResult> Post(CreateRequestParameters param)
+        public async Task<APIResponse> Post(CreateRequestParameters param)
         {
+            APIResponse aPIResponse = new();
+
             if (ModelState.IsValid)
             {
                 var user = _context.Users.Where(x => x.UserId == param.UserId).FirstOrDefault();
 
                 if (user == null)
                 {
-                    return BadRequest("Invalid userId");
+                    aPIResponse.Status = "Error";
+                    aPIResponse.Message = "Invalid userId";
+
+                    return aPIResponse;
                 }
 
                 var request = new Request
@@ -68,12 +78,22 @@ namespace Kill_hunger.Controllers
                 _context.Requests.Add(request);
                 await _context.SaveChangesAsync();
 
-                return Created();
+                aPIResponse.Status = "Success";
+                aPIResponse.Message = "Request Created Successfully";
+
+                return aPIResponse;
             }
             else
             {
                 var errors = ModelState.Values.SelectMany(c => c.Errors).Select(e => e.ErrorMessage);
-                return BadRequest(new { Error = errors });
+
+                if (errors.Any())
+                {
+                    aPIResponse.Message = errors.ToString()!;
+                } 
+                aPIResponse.Status = "Error";
+
+                return aPIResponse;
             }
         }
 
@@ -87,15 +107,20 @@ namespace Kill_hunger.Controllers
         /// <response code="500">Unexpected Error encountered</response>
         [ProducesResponseType(StatusCodes.Status201Created)]
         [HttpPut]
-        public async Task<ActionResult> Edit(UpdateRequestParameters parameters)
+        public async Task<APIResponse> Edit(UpdateRequestParameters parameters)
         {
+            APIResponse aPIResponse = new();
+
             if (ModelState.IsValid)
             {
                 var request = _context.Requests.Where(x=>x.Id == parameters.Id).FirstOrDefault();
 
                 if(request == null)
                 {
-                    return NotFound("Unable to Update the Request of given Id");
+                    aPIResponse.Status = "Error";
+                    aPIResponse.Message = "Unable to Update the Request of given Id";
+
+                    return aPIResponse;
                 }
 
                 request.Id = parameters.Id;
@@ -109,12 +134,22 @@ namespace Kill_hunger.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Created();
+                aPIResponse.Status = "Success";
+                aPIResponse.Message = "Request Updated Successfully";
+
+                return aPIResponse;
             }
             else
             {
                 var errors = ModelState.Values.SelectMany(c => c.Errors).Select(e => e.ErrorMessage);
-                return BadRequest(new { Error = errors });
+
+                if (errors.Any())
+                {
+                    aPIResponse.Message = errors.ToString()!;
+                }
+                aPIResponse.Status = "Error";
+
+                return aPIResponse;
             }
         }
 
@@ -131,8 +166,10 @@ namespace Kill_hunger.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
 
         [Route("Id")]
-        public async Task<IActionResult> Delete(int Id)
+        public async Task<APIResponse> Delete(int Id)
         {
+            APIResponse aPIResponse = new();
+
             var request = await _context.Requests.SingleOrDefaultAsync(x => x.Id == Id); ;
 
             if (request != null)
@@ -140,11 +177,17 @@ namespace Kill_hunger.Controllers
                 _context.Requests.Remove(request);
                 _context.SaveChanges();
 
-                return NoContent();
+                aPIResponse.Status = "Success";
+                aPIResponse.Message = "Request Deleted Successfully";
+
+                return aPIResponse;
             }
             else
             {
-                return NotFound("Unable to delete the Request of given Id");
+                aPIResponse.Status = "Error";
+                aPIResponse.Message = "Unable to delete the Request of given Id";
+
+                return aPIResponse;
             }
         }
     }

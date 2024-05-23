@@ -2,7 +2,7 @@
 {
     public enum RequestType
     {
-        FoodCenter,
-        Communities
+        Communities,
+        FoodCenter
     }
 }

@@ -28,11 +28,16 @@ namespace Kill_hunger.Controllers
         /// <response code="500">Unexpected Error encountered</response>
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpGet]
-        public async Task<ActionResult<RequestClaim>> Get()
+        public async Task<APIResponse> Get()
         {
+            APIResponse aPIResponse = new();
+
             var request = await _context.RequestClaims.ToListAsync();
 
-            return Ok(request);
+            aPIResponse.Data = request;
+            aPIResponse.Status = "Success";
+
+            return aPIResponse;
         }
 
         /// <summary>
@@ -45,22 +50,30 @@ namespace Kill_hunger.Controllers
         /// <response code="500">Unexpected Error encountered</response>
         [ProducesResponseType(StatusCodes.Status201Created)]
         [HttpPost]
-        public async Task<ActionResult> Post(CreateRequestClaimParameters param)
+        public async Task<APIResponse> Post(CreateRequestClaimParameters param)
         {
+            APIResponse aPIResponse = new();
+
             if (ModelState.IsValid)
             {
                 var user = _context.Users.Where(x => x.UserId == param.RequestClaimBye).FirstOrDefault();
 
                 if (user == null)
                 {
-                    return BadRequest("Invalid userId");
+                    aPIResponse.Status = "Error";
+                    aPIResponse.Message = "Invalid userId";
+
+                    return aPIResponse;
                 }
 
                 var request = _context.Requests.Where(x => x.Id == param.RequestId).FirstOrDefault();
 
                 if (request == null)
                 {
-                    return BadRequest("Invalid RequestId");
+                    aPIResponse.Status = "Error";
+                    aPIResponse.Message = "Invalid RequestId";
+
+                    return aPIResponse;
                 }
 
                 var requestClaim = new RequestClaim
@@ -74,12 +87,22 @@ namespace Kill_hunger.Controllers
                 _context.RequestClaims.Add(requestClaim);
                 await _context.SaveChangesAsync();
 
-                return Created();
+                aPIResponse.Status = "Success";
+                aPIResponse.Message = "RequestClaims Created Successfully";
+
+                return aPIResponse;
             }
             else
             {
                 var errors = ModelState.Values.SelectMany(c => c.Errors).Select(e => e.ErrorMessage);
-                return BadRequest(new { Error = errors });
+
+                if (errors.Any())
+                {
+                    aPIResponse.Message = errors.ToString()!;
+                }
+                aPIResponse.Status = "Error";
+
+                return aPIResponse;
             }
         }
     }
