@@ -21,6 +21,8 @@ namespace Kill_hunger.Models
         public string city { get; set; } = string.Empty;
         [AllowNull]
         public string country { get; set; } = string.Empty;
+        [AllowNull]
+        public string UserType { get; set; } = string.Empty;
 
 
     }

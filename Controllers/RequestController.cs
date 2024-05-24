@@ -36,7 +36,7 @@ namespace Kill_hunger.Controllers
 
             aPIResponse.Data = request;
             aPIResponse.Status = "Success";
-            
+
             return aPIResponse;
         }
 
@@ -90,7 +90,7 @@ namespace Kill_hunger.Controllers
                 if (errors.Any())
                 {
                     aPIResponse.Message = errors.ToString()!;
-                } 
+                }
                 aPIResponse.Status = "Error";
 
                 return aPIResponse;
@@ -113,9 +113,9 @@ namespace Kill_hunger.Controllers
 
             if (ModelState.IsValid)
             {
-                var request = _context.Requests.Where(x=>x.Id == parameters.Id).FirstOrDefault();
+                var request = _context.Requests.Where(x => x.Id == parameters.Id).FirstOrDefault();
 
-                if(request == null)
+                if (request == null)
                 {
                     aPIResponse.Status = "Error";
                     aPIResponse.Message = "Unable to Update the Request of given Id";
@@ -129,7 +129,7 @@ namespace Kill_hunger.Controllers
                 request.UserId = parameters.UserId;
                 request.IsClaimed = parameters.IsClaimed;
                 request.IsDelete = parameters.IsDelete;
-            
+
                 _context.Requests.Update(request);
 
                 await _context.SaveChangesAsync();
@@ -190,5 +190,16 @@ namespace Kill_hunger.Controllers
                 return aPIResponse;
             }
         }
+
+        //public async Task<APIResponse> GetRequest(int userid)
+        //{
+        //    var ipAddress = HttpContext.GetServerVariable("HTTP_X_FORWARDED_FOR") ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+        //    var ipAddressWithoutPort = ipAddress?.Split(':')[0];
+        //    APIResponse aPIResponse = new APIResponse();
+        //    ipAddressWithoutPort = ipAddressWithoutPort == "" ? "::1" : ipAddressWithoutPort;
+        //    List<string> GeaLocationData = GetIpLocation(ipAddressWithoutPort);
+
+        //}
+
     }
 }
