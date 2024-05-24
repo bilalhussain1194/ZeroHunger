@@ -41,9 +41,9 @@ namespace Kill_hunger.Controllers
         }
 
         /// <summary>
-        /// Return All Requests
+        /// Return Requests By UserId
         /// </summary>
-        /// <response code="200">Return All Requests</response>
+        /// <response code="200">Return Requests By UserId</response>
         /// <response code="400">The server was unable to process the request</response>
         /// <response code="401">Client is not authenticated</response>
         /// <response code="403">Client lack sufficient permission to perform the request</response>
@@ -104,6 +104,58 @@ namespace Kill_hunger.Controllers
 
                 aPIResponse.Status = "Success";
                 aPIResponse.Message = "Request Created Successfully";
+
+                return aPIResponse;
+            }
+            else
+            {
+                var errors = ModelState.Values.SelectMany(c => c.Errors).Select(e => e.ErrorMessage);
+
+                if (errors.Any())
+                {
+                    aPIResponse.Message = errors.ToString()!;
+                }
+                aPIResponse.Status = "Error";
+
+                return aPIResponse;
+            }
+        }
+
+        /// <summary>
+        /// Close a Request
+        /// </summary>
+        /// <response code="201">Close a Request</response>
+        /// <response code="400">The server was unable to process the request</response>
+        /// <response code="401">Client is not authenticated</response>
+        /// <response code="403">Client lack sufficient permission to perform the request</response>
+        /// <response code="500">Unexpected Error encountered</response>
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [HttpPost]
+        [Route("[controller]/[action]")]
+        public async Task<APIResponse> CloseRequest(CloseRequestParameters param)
+        {
+            APIResponse aPIResponse = new();
+
+            if (ModelState.IsValid)
+            {
+                var request = _context.Requests.Where(x => x.UserId == param.UserId && x.Id == param.RequestId).FirstOrDefault();
+
+                if (request == null)
+                {
+                    aPIResponse.Status = "Error";
+                    aPIResponse.Message = "you don't have permission to close this request";
+
+                    return aPIResponse;
+                }
+
+                request.IsClose = param.IsClose;
+                request.CloseReason = param.CloseReason;
+
+                _context.Requests.Update(request);
+                await _context.SaveChangesAsync();
+
+                aPIResponse.Status = "Success";
+                aPIResponse.Message = "Request Close Successfully";
 
                 return aPIResponse;
             }

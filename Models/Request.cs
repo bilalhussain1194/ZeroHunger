@@ -13,6 +13,8 @@ namespace Kill_hunger.Models
         public int UserId { get; set; }
         public bool IsClaimed { get; set; }
         public bool IsDelete { get; set; }
+        public bool IsClose { get; set; }
+        public string? CloseReason { get; set; }
 
         public List<RequestClaim> RequestClaim { get; set; } = [];
     }
