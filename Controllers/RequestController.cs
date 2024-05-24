@@ -27,6 +27,7 @@ namespace Kill_hunger.Controllers
         /// <response code="500">Unexpected Error encountered</response>
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpGet]
+        [Route("[controller]")]
         public async Task<APIResponse> Get()
         {
             APIResponse aPIResponse = new();
@@ -240,8 +241,7 @@ namespace Kill_hunger.Controllers
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
-        [Route("[controller]")]
-        [Route("Id")]
+        [Route("[controller]/{Id}")]
         public async Task<APIResponse> Delete(int Id)
         {
             APIResponse aPIResponse = new();
