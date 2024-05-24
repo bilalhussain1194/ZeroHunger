@@ -1,8 +1,11 @@
-﻿using Kill_hunger.Data;
+﻿using Azure.Core;
+using Kill_hunger.Data;
 using Kill_hunger.Models;
 using Kill_hunger.RequestDto;
+using Kill_hunger.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Request = Kill_hunger.Models.Request;
 
 namespace Kill_hunger.Controllers
 {
@@ -27,6 +30,7 @@ namespace Kill_hunger.Controllers
         /// <response code="500">Unexpected Error encountered</response>
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpGet]
+        [Route("[controller]/[action]")]
         public async Task<APIResponse> Get()
         {
             APIResponse aPIResponse = new();
@@ -58,6 +62,41 @@ namespace Kill_hunger.Controllers
 
             aPIResponse.Data = request;
             aPIResponse.Status = "Success";
+
+            return aPIResponse;
+        }
+
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpGet]
+        [Route("[controller]/[action]/{UserId}")]
+        public async Task<APIResponse> GetNearestRequests(int UserId)
+        {
+            APIResponse aPIResponse = new();
+            var ipAddress = HttpContext.GetServerVariable("HTTP_X_FORWARDED_FOR") ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+            var ipAddressWithoutPort = ipAddress?.Split(':')[0];
+
+            ipAddressWithoutPort = ipAddressWithoutPort == "" ? "::1" : ipAddressWithoutPort;
+          
+            List<string> GeaLocationData = GeaoLocationService.GetIpLocation(ipAddressWithoutPort);
+            if (GeaLocationData == null)
+            {
+                var usercity = _context.Users.Where(User => User.UserId == UserId).FirstOrDefault().City ?? "";
+                if(usercity != null)
+                {
+                    var requestList = _context.Requests.Where(c => c.City == usercity).ToList();
+                    aPIResponse.Status = "Success";
+                    aPIResponse.Data = requestList;
+                }
+                else
+                {
+                    aPIResponse.Message = "gea location is not fount";
+                    aPIResponse.Status = "Error";
+                }
+            }
+           
+
+         
+            
 
             return aPIResponse;
         }
