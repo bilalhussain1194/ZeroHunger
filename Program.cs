@@ -2,6 +2,7 @@ using Kill_hunger.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -13,7 +14,10 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddCors();
+builder.Services.AddCors(p => p.AddPolicy("corsapp", builder =>
+{
+    builder.WithOrigins("https://94c7-203-101-164-179.ngrok-free.app").AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+}));
 builder.Services.Configure<ForwardedHeadersOptions>(options => {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.KnownNetworks.Clear();
@@ -55,7 +59,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors(options=>options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().WithOrigins("https://ec69-203-101-164-179.ngrok-free.app/"));
+
+app.UseCors("corsapp");
+//app.UseCors(options=>options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().WithOrigins("https://94c7-203-101-164-179.ngrok-free.app/"));
 app.MapControllers();
 
 app.Run();

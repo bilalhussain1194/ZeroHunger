@@ -48,8 +48,10 @@ namespace Kill_hunger.Controllers
                 {
                     var tokenString = GenerateJSONWebToken();
                     login.usertoken = tokenString;
-                    login.city = GeaLocationData?[0]??"";
-                    login.country = GeaLocationData?[1]??"";
+                    login.city = GeaLocationData?[0]?? "";
+                    login.country = GeaLocationData?[1] ?? "";
+                    login.UserName = user.Name;
+                    login.UserType= user.IsProvider? "Provider" : "Community";
 
                 }
                 else

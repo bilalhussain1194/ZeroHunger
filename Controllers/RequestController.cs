@@ -27,7 +27,6 @@ namespace Kill_hunger.Controllers
         /// <response code="500">Unexpected Error encountered</response>
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpGet]
-        [Route("[controller]")]
         public async Task<APIResponse> Get()
         {
             APIResponse aPIResponse = new();
@@ -267,5 +266,16 @@ namespace Kill_hunger.Controllers
                 return aPIResponse;
             }
         }
+
+        //public async Task<APIResponse> GetRequest(int userid)
+        //{
+        //    var ipAddress = HttpContext.GetServerVariable("HTTP_X_FORWARDED_FOR") ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+        //    var ipAddressWithoutPort = ipAddress?.Split(':')[0];
+        //    APIResponse aPIResponse = new APIResponse();
+        //    ipAddressWithoutPort = ipAddressWithoutPort == "" ? "::1" : ipAddressWithoutPort;
+        //    List<string> GeaLocationData = GetIpLocation(ipAddressWithoutPort);
+
+        //}
+
     }
 }
